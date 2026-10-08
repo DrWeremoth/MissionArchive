@@ -29,9 +29,6 @@ return {
 	mission_archive_no_missions = {
 		en = "No saved missions yet. Complete a mission to start your archive.",
 	},
-	mission_archive_empty_slot = {
-		en = "No mission recorded",
-	},
 	mission_archive_victory = {
 		en = "VICTORY",
 	},

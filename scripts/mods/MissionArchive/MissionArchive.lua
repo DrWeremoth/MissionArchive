@@ -38,7 +38,18 @@ local function read_stat(stats_key, stat_name)
 		return nil
 	end
 
-	return math.round(Managers.stats:read_user_stat(stats_key, stat_name))
+	local value = Managers.stats:read_user_stat(stats_key, stat_name)
+
+	return type(value) == "number" and math.round(value) or nil
+end
+
+local function make_stat_row(display, player_value, team_value)
+	return {
+		label = Localize(display.display_name),
+		player = player_value,
+		team = team_value,
+		format = display.private == "session_time_coherency" and "time" or "number",
+	}
 end
 
 local function current_stats(stats_key)
@@ -56,17 +67,13 @@ local function current_stats(stats_key)
 	for i = 1, #SessionStatsDisplay do
 		local display = SessionStatsDisplay[i]
 		local pushed = pushed_rows and pushed_rows[i]
+		-- Prefer the final scoreboard snapshot; live stats are a fallback when the client has no pushed row.
 		local player_value = pushed and pushed.private
 			or live_key and read_stat(live_key, display.private)
 		local team_value = pushed and pushed.team
 			or live_key and read_stat(live_key, display.team)
 
-		rows[#rows + 1] = {
-			label = Localize(display.display_name),
-			player = player_value,
-			team = team_value,
-			format = display.private == "session_time_coherency" and "time" or "number",
-		}
+		rows[#rows + 1] = make_stat_row(display, player_value, team_value)
 	end
 
 	return rows
@@ -94,12 +101,11 @@ function mod:get_history()
 			for i, display in ipairs(SessionStatsDisplay) do
 				local team_value = demo.team_stats[i]
 
-				stats[i] = {
-					label = Localize(display.display_name),
-					player = demo.player_stats[i],
-					team = team_value ~= false and team_value or nil,
-					format = display.private == "session_time_coherency" and "time" or "number",
-				}
+				stats[i] = make_stat_row(
+					display,
+					demo.player_stats[i],
+					team_value ~= false and team_value or nil
+				)
 			end
 
 			demo_records[#demo_records + 1] = {
@@ -179,7 +185,6 @@ local function save_current_mission(view)
 	end
 
 	mod:set(HISTORY_SETTING, history)
-	mod._history_index = nil
 	mod:info("Saved mission stats for %s.", record.mission_name)
 end
 

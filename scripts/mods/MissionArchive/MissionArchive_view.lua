@@ -470,6 +470,7 @@ MissionArchiveView._handle_input = function(self, input_service, dt, t)
 end
 
 MissionArchiveView._select_record = function(self, visible_row)
+	-- History is stored oldest-first, while the on-screen list shows newest-first.
 	local record_index = #self._history - visible_row + 1
 
 	if record_index < 1 or record_index > #self._history then
