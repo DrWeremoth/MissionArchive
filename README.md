@@ -2,6 +2,11 @@
 
 Mission Archive is a Darktide Mod Framework add-on that saves the built-in end-of-mission stats locally and lets you browse them in an in-game UI.
 
+## Prerequisites
+
+- Warhammer 40,000: Darktide for PC
+- Darktide Mod Framework (DMF), installed and enabled
+
 ## What it saves
 
 - Mission name, result, start time, and duration
