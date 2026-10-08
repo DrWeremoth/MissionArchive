@@ -538,10 +538,15 @@ MissionArchiveView._refresh_archive = function(self)
 
 	for i = 1, MAX_STATS do
 		local stat = selected and selected.stats and selected.stats[i]
+		local team_value = stat and format_stat(stat, stat.team)
+
+		if stat and stat.format == "time" and stat.team == nil then
+			team_value = ""
+		end
 
 		widgets["stat_name_" .. i].content.text = stat and stat.label or ""
 		widgets["stat_player_" .. i].content.text = stat and format_stat(stat, stat.player) or ""
-		widgets["stat_team_" .. i].content.text = stat and format_stat(stat, stat.team) or ""
+		widgets["stat_team_" .. i].content.text = team_value or ""
 	end
 end
 
