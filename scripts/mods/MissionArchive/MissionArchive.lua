@@ -85,6 +85,40 @@ local function current_stats(stats_key)
 	return rows
 end
 
+local function valid_history_record(record)
+	if type(record) ~= "table" then
+		return false
+	end
+
+	for _, key in ipairs({ "mission_name", "player_name", "difficulty", "mission_type" }) do
+		local value = record[key]
+
+		if value ~= nil and type(value) ~= "string" then
+			return false
+		end
+	end
+
+	if record.won ~= nil and type(record.won) ~= "boolean"
+		or record.duration ~= nil and type(record.duration) ~= "number"
+		or record.demo ~= nil and type(record.demo) ~= "boolean"
+		or record.stats ~= nil and type(record.stats) ~= "table"
+	then
+		return false
+	end
+
+	for _, stat in ipairs(record.stats or {}) do
+		if type(stat) ~= "table"
+			or type(stat.label) ~= "string"
+			or stat.player ~= nil and type(stat.player) ~= "number"
+			or stat.team ~= nil and type(stat.team) ~= "number"
+		then
+			return false
+		end
+	end
+
+	return true
+end
+
 function mod:get_history()
 	local history = self:get(HISTORY_SETTING)
 
@@ -96,6 +130,20 @@ function mod:get_history()
 	end
 
 	local changed = false
+	local invalid_records = 0
+
+	for i = #history, 1, -1 do
+		if not valid_history_record(history[i]) then
+			table.remove(history, i)
+			invalid_records = invalid_records + 1
+			changed = true
+		end
+	end
+
+	if invalid_records > 0 then
+		self:error("Removed %d invalid record(s) from saved mission history.", invalid_records)
+	end
+
 	local seed_demo_records = not self:get(DEMO_SEEDED_SETTING)
 
 	if seed_demo_records then
