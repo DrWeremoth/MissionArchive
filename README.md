@@ -9,7 +9,7 @@ Mission Archive is a Darktide Mod Framework add-on that saves the built-in end-o
 
 ## What it saves
 
-- Mission name, result, start time, and duration
+- Mission name, result, difficulty, mission type, start time, and duration
 - The local player's values and strike-team totals for the 14 session-stat rows displayed by Darktide
 - Up to 10 recent missions
 - Two clearly marked demo missions are seeded once on first use so you can preview the mission selector

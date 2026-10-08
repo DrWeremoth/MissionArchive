@@ -28,13 +28,14 @@ local function text_style(base_style, font_size, color)
 	return style
 end
 
-local title_style = text_style(UIFontSettings.header_1, 34, TERMINAL_COLOR)
+local title_style = text_style(UIFontSettings.header_3, 34, Color.terminal_text_header(255, true))
 local section_style = text_style(UIFontSettings.header_3, 22, Color.terminal_text_header(255, true))
 local body_style = text_style(UIFontSettings.body, 20, Color.ui_grey_light(255, true))
 local stat_label_style = text_style(UIFontSettings.body, 20, TERMINAL_COLOR)
 local selected_style = text_style(UIFontSettings.body, 20, Color.terminal_text_header_selected(255, true))
 local muted_style = text_style(UIFontSettings.body_small, 18, Color.ui_grey_medium(255, true))
-local value_style = text_style(UIFontSettings.body, 20, Color.white(255, true))
+local vanilla_body_small_style = text_style(UIFontSettings.body_small, 18, Color.terminal_text_body(255, true))
+local value_style = text_style(UIFontSettings.body, 20, Color.text_default(255, true))
 
 local scenegraph_definition = {
 	screen = UIWorkspaceSettings.screen,
@@ -70,36 +71,43 @@ local scenegraph_definition = {
 		vertical_alignment = "top",
 		parent = "panel",
 		horizontal_alignment = "left",
-		size = { 970, 42 },
+		size = { 970, 34 },
 		position = { 555, 142, 2 },
+	},
+	record_mission_info = {
+		vertical_alignment = "top",
+		parent = "panel",
+		horizontal_alignment = "left",
+		size = { 970, 26 },
+		position = { 555, 178, 2 },
 	},
 	record_subtitle = {
 		vertical_alignment = "top",
 		parent = "panel",
 		horizontal_alignment = "left",
-		size = { 970, 32 },
-		position = { 555, 178, 2 },
+		size = { 970, 28 },
+		position = { 555, 205, 2 },
 	},
 	stat_name_header = {
 		vertical_alignment = "top",
 		parent = "panel",
 		horizontal_alignment = "left",
 		size = { 450, 28 },
-		position = { 555, 220, 2 },
+		position = { 555, 238, 2 },
 	},
 	stat_player_header = {
 		vertical_alignment = "top",
 		parent = "panel",
 		horizontal_alignment = "left",
 		size = { 180, 28 },
-		position = { 1095, 220, 2 },
+		position = { 1095, 238, 2 },
 	},
 	stat_team_header = {
 		vertical_alignment = "top",
 		parent = "panel",
 		horizontal_alignment = "left",
 		size = { 210, 28 },
-		position = { 1300, 220, 2 },
+		position = { 1300, 238, 2 },
 	},
 	empty_message = {
 		vertical_alignment = "top",
@@ -198,13 +206,22 @@ local widget_definitions = {
 			style = section_style,
 		},
 	}, "record_title"),
+	record_mission_info = UIWidget.create_definition({
+		{
+			pass_type = "text",
+			value_id = "text",
+			style_id = "text",
+			value = "",
+			style = vanilla_body_small_style,
+		},
+	}, "record_mission_info"),
 	record_subtitle = UIWidget.create_definition({
 		{
 			pass_type = "text",
 			value_id = "text",
 			style_id = "text",
 			value = "",
-			style = muted_style,
+			style = vanilla_body_small_style,
 		},
 	}, "record_subtitle"),
 	stat_name_header = UIWidget.create_definition({
@@ -213,7 +230,7 @@ local widget_definitions = {
 			value_id = "text",
 			style_id = "text",
 			value = mod:localize("mission_archive_statistic"),
-			style = muted_style,
+			style = vanilla_body_small_style,
 		},
 	}, "stat_name_header"),
 	stat_player_header = UIWidget.create_definition({
@@ -222,7 +239,7 @@ local widget_definitions = {
 			value_id = "text",
 			style_id = "text",
 			value = mod:localize("mission_archive_player"),
-			style = muted_style,
+			style = vanilla_body_small_style,
 		},
 	}, "stat_player_header"),
 	stat_team_header = UIWidget.create_definition({
@@ -231,7 +248,7 @@ local widget_definitions = {
 			value_id = "text",
 			style_id = "text",
 			value = mod:localize("mission_archive_team"),
-			style = muted_style,
+			style = vanilla_body_small_style,
 		},
 	}, "stat_team_header"),
 	empty_message = UIWidget.create_definition({
@@ -306,7 +323,7 @@ end
 
 for i = 1, MAX_STATS do
 	local scenegraph_id = "stat_name_" .. i
-	local y = 253 + (i - 1) * STAT_ROW_HEIGHT
+	local y = 271 + (i - 1) * STAT_ROW_HEIGHT
 	local row_shade = i % 2 == 0 and { 64, 0, 0, 0 } or { 0, 0, 0, 0 }
 
 	scenegraph_definition[scenegraph_id] = {
@@ -392,6 +409,10 @@ local function format_stat(stat, value)
 	end
 
 	return tostring(value)
+end
+
+local function localized_or_unknown(localization_key)
+	return localization_key and Localize(localization_key) or mod:localize("mission_archive_unknown")
 end
 
 local function record_title(record)
@@ -490,6 +511,13 @@ MissionArchiveView._refresh_archive = function(self)
 	widgets.stats_header.content.text = string.format("%d / %d", count, MAX_HISTORY)
 	widgets.empty_message.content.text = count == 0 and mod:localize("mission_archive_no_missions") or ""
 	widgets.record_title.content.text = selected and record_title(selected) or ""
+	widgets.record_mission_info.content.text = selected and string.format(
+		"%s: %s  |  %s: %s",
+		mod:localize("mission_archive_difficulty"),
+		localized_or_unknown(selected.difficulty),
+		mod:localize("mission_archive_mission_type"),
+		localized_or_unknown(selected.mission_type)
+	) or ""
 	widgets.record_subtitle.content.text = selected and string.format(
 		"%s  |  %s",
 		selected.player_name or "Player",

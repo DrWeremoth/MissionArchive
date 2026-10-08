@@ -35,6 +35,15 @@ return {
 	mission_archive_defeat = {
 		en = "DEFEAT",
 	},
+	mission_archive_difficulty = {
+		en = "DIFFICULTY",
+	},
+	mission_archive_mission_type = {
+		en = "MISSION TYPE",
+	},
+	mission_archive_unknown = {
+		en = "Unknown",
+	},
 	mission_archive_close_hint = {
 		en = "Press",
 	},

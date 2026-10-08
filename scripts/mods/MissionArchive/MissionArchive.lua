@@ -1,6 +1,8 @@
 local mod = get_mod("MissionArchive")
 local SessionStatsDisplay = require("scripts/settings/stats/session_stats_display")
 local StatDefinitions = require("scripts/managers/stats/stat_definitions")
+local Danger = require("scripts/utilities/danger")
+local MissionTypes = require("scripts/settings/mission/mission_types")
 
 local MAX_HISTORY = 10
 local HISTORY_SETTING = "mission_history"
@@ -9,6 +11,8 @@ local DEMO_SEEDED_SETTING = "demo_missions_seeded"
 local DEMO_MISSIONS = {
 	{
 		mission_name = "DEMO - Hab Dreyko",
+		difficulty = "loc_mission_board_danger_highest",
+		mission_type = "loc_mission_type_03_name",
 		won = true,
 		duration = 915,
 		start_time = "2030-01-02T18:30:00Z",
@@ -18,6 +22,8 @@ local DEMO_MISSIONS = {
 	},
 	{
 		mission_name = "DEMO - Chasm Logistratum",
+		difficulty = "loc_mission_board_danger_high",
+		mission_type = "loc_mission_type_01_name",
 		won = false,
 		duration = 1278,
 		start_time = "2030-01-03T20:15:00Z",
@@ -70,8 +76,8 @@ local function current_stats(stats_key)
 		-- Prefer the final scoreboard snapshot; live stats are a fallback when the client has no pushed row.
 		local player_value = pushed and pushed.private
 			or live_key and read_stat(live_key, display.private)
-		local team_value = pushed and pushed.team
-			or live_key and read_stat(live_key, display.team)
+		local team_value = display.team and (pushed and pushed.team
+			or live_key and read_stat(live_key, display.team))
 
 		rows[#rows + 1] = make_stat_row(display, player_value, team_value)
 	end
@@ -110,6 +116,8 @@ function mod:get_history()
 
 			demo_records[#demo_records + 1] = {
 				mission_name = demo.mission_name,
+				difficulty = demo.difficulty,
+				mission_type = demo.mission_type,
 				won = demo.won,
 				duration = demo.duration,
 				start_time = demo.start_time,
@@ -124,6 +132,37 @@ function mod:get_history()
 		end
 
 		changed = true
+	end
+
+	for _, record in ipairs(history) do
+		if type(record) == "table" and type(record.stats) == "table" then
+			for i, display in ipairs(SessionStatsDisplay) do
+				local stat = record.stats[i]
+
+				if stat and not display.team and stat.team ~= nil then
+					stat.team = nil
+					changed = true
+				end
+			end
+		end
+
+		if record.demo then
+			for _, demo in ipairs(DEMO_MISSIONS) do
+				if record.mission_name == demo.mission_name then
+					if not record.difficulty then
+						record.difficulty = demo.difficulty
+						changed = true
+					end
+
+					if not record.mission_type then
+						record.mission_type = demo.mission_type
+						changed = true
+					end
+
+					break
+				end
+			end
+		end
 	end
 
 	while #history > MAX_HISTORY do
@@ -164,9 +203,14 @@ local function save_current_mission(view)
 	local mission_settings = require("scripts/settings/mission/mission_templates")[mission.missionName]
 	local mission_display_name = mission_settings and mission_settings.mission_name
 		and Localize(mission_settings.mission_name)
+	local difficulty_settings = type(mission.challenge) == "number"
+		and Danger.danger_by_difficulty(mission.challenge, mission.resistance)
+	local mission_type_settings = mission_settings and MissionTypes[mission_settings.mission_type]
 
 	local record = {
 		mission_name = mission_display_name or mission.missionName or "Unknown mission",
+		difficulty = difficulty_settings and difficulty_settings.display_name,
+		mission_type = mission_type_settings and mission_type_settings.name,
 		won = view._round_won == true,
 		duration = mission.playTimeSeconds,
 		start_time = mission.startTime,
