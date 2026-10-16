@@ -11,6 +11,12 @@ return {
 	open_archive_desc = {
 		en = "Open or close the mission archive.",
 	},
+	max_history = {
+		en = "Maximum saved missions",
+	},
+	max_history_desc = {
+		en = "Choose how many recent missions to keep in the archive (10-100).",
+	},
 	mission_archive_title = {
 		en = "Mission Archive",
 	},

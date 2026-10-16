@@ -4,9 +4,28 @@ local StatDefinitions = require("scripts/managers/stats/stat_definitions")
 local Danger = require("scripts/utilities/danger")
 local MissionTypes = require("scripts/settings/mission/mission_types")
 
-local MAX_HISTORY = 10
+local DEFAULT_MAX_HISTORY = 10
+local MIN_HISTORY = 10
+local MAX_HISTORY = 100
+local MAX_HISTORY_SETTING = "max_history"
 local HISTORY_SETTING = "mission_history"
 local DEMO_SEEDED_SETTING = "demo_missions_seeded"
+local invalid_history_limit_reported = false
+
+function mod:get_history_limit()
+	local limit = self:get(MAX_HISTORY_SETTING)
+
+	if type(limit) == "number" and limit % 1 == 0 and limit >= MIN_HISTORY and limit <= MAX_HISTORY then
+		return limit
+	end
+
+	if not invalid_history_limit_reported then
+		self:error("Configured mission history limit is invalid; using the default of %d.", DEFAULT_MAX_HISTORY)
+		invalid_history_limit_reported = true
+	end
+
+	return DEFAULT_MAX_HISTORY
+end
 
 local DEMO_MISSIONS = {
 	{
@@ -213,7 +232,7 @@ function mod:get_history()
 		end
 	end
 
-	while #history > MAX_HISTORY do
+	while #history > self:get_history_limit() do
 		table.remove(history, 1)
 		changed = true
 	end
@@ -272,7 +291,7 @@ local function save_current_mission(view)
 
 	history[#history + 1] = record
 
-	while #history > MAX_HISTORY do
+	while #history > mod:get_history_limit() do
 		table.remove(history, 1)
 	end
 

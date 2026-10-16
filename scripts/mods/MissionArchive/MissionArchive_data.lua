@@ -7,6 +7,15 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "max_history",
+				type = "numeric",
+				title = "max_history",
+				tooltip = "max_history_desc",
+				default_value = 10,
+				range = { 10, 100 },
+				decimals_number = 0,
+			},
+			{
 				setting_id = "open_archive",
 				type = "keybind",
 				title = "open_archive",

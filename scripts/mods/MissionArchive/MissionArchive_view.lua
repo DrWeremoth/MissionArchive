@@ -6,7 +6,7 @@ local InputUtils = require("scripts/managers/input/input_utils")
 local ColorUtilities = require("scripts/utilities/ui/colors")
 local DMF = get_mod("DMF")
 
-local MAX_HISTORY = 10
+local VISIBLE_HISTORY_ROWS = 10
 local MAX_STATS = 14
 local PANEL_WIDTH = 1600
 local PANEL_HEIGHT = 860
@@ -271,7 +271,7 @@ local widget_definitions = {
 	}, "footer"),
 }
 
-for i = 1, MAX_HISTORY do
+for i = 1, VISIBLE_HISTORY_ROWS do
 	local scenegraph_id = "mission_row_" .. i
 	local y = 146 + (i - 1) * MISSION_ROW_HEIGHT
 	local row_default_color = i % 2 == 0 and { 64, 0, 0, 0 } or { 0, 0, 0, 0 }
@@ -451,7 +451,7 @@ MissionArchiveView.on_enter = function(self)
 	self._selected_record = #self._history
 	self:_refresh_archive()
 
-	for i = 1, MAX_HISTORY do
+	for i = 1, VISIBLE_HISTORY_ROWS do
 		local widget = self._widgets_by_name["mission_row_" .. i]
 		widget.content.hotspot.pressed_callback = callback(self, "_select_record", i)
 	end
@@ -492,7 +492,7 @@ end
 
 MissionArchiveView._select_record = function(self, visible_row)
 	-- History is stored oldest-first, while the on-screen list shows newest-first.
-	local record_index = #self._history - visible_row + 1
+	local record_index = self._visible_history_end - visible_row + 1
 
 	if record_index < 1 or record_index > #self._history then
 		return
@@ -507,8 +507,19 @@ MissionArchiveView._refresh_archive = function(self)
 	local count = #history
 	local selected = history[self._selected_record]
 	local widgets = self._widgets_by_name
+	local visible_history_end = self._visible_history_end or count
+	local first_visible_record = visible_history_end - VISIBLE_HISTORY_ROWS + 1
 
-	widgets.stats_header.content.text = string.format("%d / %d", count, MAX_HISTORY)
+	if self._selected_record > visible_history_end then
+		visible_history_end = self._selected_record
+	elseif self._selected_record < first_visible_record then
+		visible_history_end = self._selected_record + VISIBLE_HISTORY_ROWS - 1
+	end
+
+	visible_history_end = math.min(count, visible_history_end)
+	self._visible_history_end = visible_history_end
+
+	widgets.stats_header.content.text = string.format("%d / %d", count, mod:get_history_limit())
 	widgets.empty_message.content.text = count == 0 and mod:localize("mission_archive_no_missions") or ""
 	widgets.record_title.content.text = selected and record_title(selected) or ""
 	widgets.record_mission_info.content.text = selected and string.format(
@@ -524,8 +535,8 @@ MissionArchiveView._refresh_archive = function(self)
 		format_duration(selected.duration)
 	) or ""
 
-	for i = 1, MAX_HISTORY do
-		local record_index = count - i + 1
+	for i = 1, VISIBLE_HISTORY_ROWS do
+		local record_index = visible_history_end - i + 1
 		local record = history[record_index]
 		local widget = widgets["mission_row_" .. i]
 
